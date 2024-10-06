@@ -66,6 +66,13 @@ if (isset($_GET['table'])) {
         if (tableExists($db, $selectedTable)) {
             $structure = getTableStructure($db, $selectedTable);
             $totalRows = getTotalRows($db, $selectedTable);
+
+            // Calculate total pages
+            $totalRowPages = ceil($totalRows / $rowsPerPage);
+
+            // Ensure current page is within bounds
+            $currentRowPage = max(1, min($currentRowPage, $totalRowPages));
+
             $data = getTableData($db, $selectedTable, $currentRowPage, $rowsPerPage);
         } else {
             $error = "Error: The table '$selectedTable' does not exist in the database.";
