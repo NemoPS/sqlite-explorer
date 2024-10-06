@@ -11,6 +11,28 @@
             overflow-x: auto;
             max-width: 100%;
         }
+
+        .truncate-cell {
+            max-width: 200px;
+            max-height: 3em;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            cursor: pointer;
+        }
+
+        .popup {
+            display: none;
+            position: absolute;
+            background-color: white;
+            border: 1px solid #ccc;
+            padding: 10px;
+            max-width: 400px;
+            max-height: 200px;
+            overflow-y: auto;
+            z-index: 1000;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
     </style>
 </head>
 
@@ -94,7 +116,11 @@
                                             <?php foreach ($data as $row): ?>
                                                 <tr>
                                                     <?php foreach ($row as $value): ?>
-                                                        <td class="border px-4 py-2"><?= htmlspecialchars((string)$value) ?></td>
+                                                        <td class="border px-4 py-2">
+                                                            <div class="truncate-cell" onclick="showPopup(this, '<?= htmlspecialchars(addslashes((string)$value)) ?>')">
+                                                                <?= htmlspecialchars((string)$value) ?>
+                                                            </div>
+                                                        </td>
                                                     <?php endforeach; ?>
                                                 </tr>
                                             <?php endforeach; ?>
@@ -150,6 +176,8 @@
         <?php endif; ?>
     </div>
 
+    <div id="popup" class="popup"></div>
+
     <script>
         document.getElementById('file_selector').addEventListener('change', function(e) {
             var file = e.target.files[0];
@@ -174,6 +202,24 @@
                 }
             });
         }
+
+        function showPopup(element, content) {
+            var popup = document.getElementById('popup');
+            popup.innerHTML = content;
+            popup.style.display = 'block';
+
+            var rect = element.getBoundingClientRect();
+            popup.style.left = rect.left + 'px';
+            popup.style.top = (rect.bottom + window.scrollY) + 'px';
+        }
+
+        // Close popup when clicking outside
+        document.addEventListener('click', function(event) {
+            var popup = document.getElementById('popup');
+            if (!event.target.closest('.truncate-cell') && !event.target.closest('.popup')) {
+                popup.style.display = 'none';
+            }
+        });
 
         // Show the data tab by default
         showTab('data');
