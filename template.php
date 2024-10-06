@@ -72,41 +72,15 @@
 
                         <!-- Tabs -->
                         <div class="mb-4">
-                            <button onclick="showTab('structure')" class="px-4 py-2 text-sm font-medium text-center text-gray-500 bg-gray-100 border-b-2 border-transparent hover:text-gray-600 hover:border-gray-300 focus:outline-none" id="structure-tab">Structure</button>
                             <button onclick="showTab('data')" class="px-4 py-2 text-sm font-medium text-center text-gray-500 bg-gray-100 border-b-2 border-transparent hover:text-gray-600 hover:border-gray-300 focus:outline-none" id="data-tab">Data</button>
-                        </div>
-
-                        <!-- Structure Tab Content -->
-                        <div id="structure-content" class="tab-content">
-                            <h3 class="text-xl font-semibold mb-2">Structure</h3>
-                            <div class="table-wrapper">
-                                <table class="table-auto w-full mb-4">
-                                    <thead>
-                                        <tr class="bg-gray-200">
-                                            <th class="px-4 py-2">Column</th>
-                                            <th class="px-4 py-2">Type</th>
-                                            <th class="px-4 py-2">Nullable</th>
-                                            <th class="px-4 py-2">Default</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <?php foreach ($structure as $column): ?>
-                                            <tr>
-                                                <td class="border px-4 py-2"><?= htmlspecialchars($column['name']) ?></td>
-                                                <td class="border px-4 py-2"><?= htmlspecialchars($column['type']) ?></td>
-                                                <td class="border px-4 py-2"><?= $column['notnull'] ? 'No' : 'Yes' ?></td>
-                                                <td class="border px-4 py-2"><?= htmlspecialchars($column['dflt_value'] ?? 'NULL') ?></td>
-                                            </tr>
-                                        <?php endforeach; ?>
-                                    </tbody>
-                                </table>
-                            </div>
+                            <button onclick="showTab('structure')" class="px-4 py-2 text-sm font-medium text-center text-gray-500 bg-gray-100 border-b-2 border-transparent hover:text-gray-600 hover:border-gray-300 focus:outline-none" id="structure-tab">Structure</button>
                         </div>
 
                         <!-- Data Tab Content -->
-                        <div id="data-content" class="tab-content" style="display: none;">
-                            <h3 class="text-xl font-semibold mb-2">Data (Page <?= $currentRowPage ?>)</h3>
+                        <div id="data-content" class="tab-content">
+                            <h3 class="text-xl font-semibold mb-2">Data</h3>
                             <?php if ($data): ?>
+                                <p>Page <?= $currentRowPage ?></p>
                                 <div class="table-wrapper">
                                     <table class="table-auto w-full">
                                         <thead>
@@ -141,6 +115,33 @@
                                 <p>No data found in this table.</p>
                             <?php endif; ?>
                         </div>
+
+                        <!-- Structure Tab Content -->
+                        <div id="structure-content" class="tab-content" style="display: none;">
+                            <h3 class="text-xl font-semibold mb-2">Structure</h3>
+                            <div class="table-wrapper">
+                                <table class="table-auto w-full mb-4">
+                                    <thead>
+                                        <tr class="bg-gray-200">
+                                            <th class="px-4 py-2">Column</th>
+                                            <th class="px-4 py-2">Type</th>
+                                            <th class="px-4 py-2">Nullable</th>
+                                            <th class="px-4 py-2">Default</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <?php foreach ($structure as $column): ?>
+                                            <tr>
+                                                <td class="border px-4 py-2"><?= htmlspecialchars($column['name']) ?></td>
+                                                <td class="border px-4 py-2"><?= htmlspecialchars($column['type']) ?></td>
+                                                <td class="border px-4 py-2"><?= $column['notnull'] ? 'No' : 'Yes' ?></td>
+                                                <td class="border px-4 py-2"><?= htmlspecialchars($column['dflt_value'] ?? 'NULL') ?></td>
+                                            </tr>
+                                        <?php endforeach; ?>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
                     <?php else: ?>
                         <p class="text-xl">Select a table from the list on the left to view its structure and data.</p>
                     <?php endif; ?>
@@ -174,8 +175,8 @@
             });
         }
 
-        // Show the structure tab by default
-        showTab('structure');
+        // Show the data tab by default
+        showTab('data');
     </script>
 </body>
 
