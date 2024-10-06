@@ -11,71 +11,6 @@
         [x-cloak] {
             display: none !important;
         }
-
-        .table-wrapper {
-            height: calc(100vh - 250px);
-            overflow: hidden;
-        }
-
-        .table-container {
-            overflow-y: auto;
-            overflow-x: auto;
-            /* Changed from hidden to auto */
-            height: 100%;
-        }
-
-        .table-container table {
-            border-collapse: separate;
-            border-spacing: 0;
-        }
-
-        .table-container thead {
-            position: sticky;
-            top: 0;
-            z-index: 10;
-            background-color: #f3f4f6;
-        }
-
-        .table-container th {
-            background-color: #f3f4f6;
-        }
-
-        .floating-bar {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            background-color: white;
-            box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
-            padding: 10px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            z-index: 1000;
-        }
-
-        .scroll-container {
-            flex-grow: 1;
-            overflow-x: auto;
-            margin-right: 20px;
-        }
-
-        .scroll-content {
-            height: 1px;
-        }
-
-        /* Hide scrollbar for Chrome, Safari and Opera */
-        .table-container::-webkit-scrollbar {
-            display: none;
-        }
-
-        /* Hide scrollbar for IE, Edge and Firefox */
-        .table-container {
-            -ms-overflow-style: none;
-            /* IE and Edge */
-            scrollbar-width: none;
-            /* Firefox */
-        }
     </style>
 </head>
 
@@ -145,10 +80,10 @@
 
                 <div x-show="activeTab === 'data'">
                     <?php if ($data): ?>
-                        <div class="table-wrapper" id="tableWrapper">
-                            <div class="table-container" id="tableContainer">
+                        <div class="h-[calc(100vh-250px)] overflow-hidden" id="tableWrapper">
+                            <div class="overflow-auto h-full" id="tableContainer">
                                 <table class="min-w-full divide-y divide-gray-200">
-                                    <thead class="bg-gray-50">
+                                    <thead class="bg-gray-50 sticky top-0 z-10">
                                         <tr>
                                             <?php foreach (array_keys($data[0]) as $column): ?>
                                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"><?= htmlspecialchars($column) ?></th>
@@ -165,28 +100,38 @@
                                         <?php endforeach; ?>
                                     </tbody>
                                 </table>
+
                             </div>
+
                         </div>
-                        <!-- Floating Bar -->
-                        <div class="floating-bar">
-                            <div class="scroll-container" id="scrollContainer">
-                                <div class="scroll-content" id="scrollContent"></div>
+                        <!-- Pagination -->
+                        <?php if ($totalRowPages > 1): ?>
+                            <div class="flex space-x-1 mt-2">
+                                <a href="?table=<?= urlencode($selectedTable) ?>&row_page=1" class="px-2 py-1 text-xs bg-gray-200 hover:bg-gray-300 rounded">First</a>
+
+                                <?php
+                                $range = 2; // Number of pages to show before and after the current page
+                                $start = max(1, $currentRowPage - $range);
+                                $end = min($totalRowPages, $currentRowPage + $range);
+
+                                if ($start > 1) {
+                                    echo '<span class="px-2 py-1 text-xs">...</span>';
+                                }
+
+                                for ($i = $start; $i <= $end; $i++) {
+                                    $class = ($i == $currentRowPage) ? 'bg-blue-500 text-white' : 'bg-gray-200 hover:bg-gray-300';
+                                    echo "<a href='?table=" . urlencode($selectedTable) . "&row_page=$i' class='px-2 py-1 text-xs $class rounded'>$i</a>";
+                                }
+
+                                if ($end < $totalRowPages) {
+                                    echo '<span class="px-2 py-1 text-xs">...</span>';
+                                }
+                                ?>
+
+                                <a href="?table=<?= urlencode($selectedTable) ?>&row_page=<?= $totalRowPages ?>" class="px-2 py-1 text-xs bg-gray-200 hover:bg-gray-300 rounded">Last</a>
                             </div>
-                            <!-- Pagination -->
-                            <?php if ($totalRowPages > 1): ?>
-                                <div class="flex-shrink-0 space-x-1">
-                                    <a href="?table=<?= urlencode($selectedTable) ?>&row_page=1" class="px-2 py-1 text-xs bg-gray-200 hover:bg-gray-300 rounded">First</a>
-                                    <?php if ($currentRowPage > 1): ?>
-                                        <a href="?table=<?= urlencode($selectedTable) ?>&row_page=<?= $currentRowPage - 1 ?>" class="px-2 py-1 text-xs bg-gray-200 hover:bg-gray-300 rounded">Prev</a>
-                                    <?php endif; ?>
-                                    <span class="px-2 py-1 text-xs"><?= $currentRowPage ?> / <?= $totalRowPages ?></span>
-                                    <?php if ($currentRowPage < $totalRowPages): ?>
-                                        <a href="?table=<?= urlencode($selectedTable) ?>&row_page=<?= $currentRowPage + 1 ?>" class="px-2 py-1 text-xs bg-gray-200 hover:bg-gray-300 rounded">Next</a>
-                                    <?php endif; ?>
-                                    <a href="?table=<?= urlencode($selectedTable) ?>&row_page=<?= $totalRowPages ?>" class="px-2 py-1 text-xs bg-gray-200 hover:bg-gray-300 rounded">Last</a>
-                                </div>
-                            <?php endif; ?>
-                        </div>
+                        <?php endif; ?>
+
                     <?php else: ?>
                         <p>No data found in this table.</p>
                     <?php endif; ?>
