@@ -27,6 +27,61 @@ function getTempFilePath($originalName)
     return $tempDir . DIRECTORY_SEPARATOR . 'sqlite_browser_' . md5($originalName) . '.sqlite';
 }
 
+// Add these functions near the top of the file, after the existing function definitions
+
+function getDirectoryContents($path)
+{
+    $contents = [];
+    $items = scandir($path);
+
+    foreach ($items as $item) {
+        if ($item != "." && $item != ".." && !(is_dir($path . DIRECTORY_SEPARATOR . $item) && $item[0] === '.')) {
+            $fullPath = $path . DIRECTORY_SEPARATOR . $item;
+            $isDir = is_dir($fullPath);
+            $isSqlite = strtolower(pathinfo($fullPath, PATHINFO_EXTENSION)) === 'sqlite';
+
+            if ($isDir || $isSqlite) {
+                $truncatedName = strlen($item) > 30 ? substr($item, 0, 27) . '...' : $item;
+                $contents[] = [
+                    'name' => $truncatedName,
+                    'fullName' => $item,
+                    'path' => $fullPath,
+                    'type' => $isDir ? 'directory' : 'sqlite',
+                ];
+            }
+        }
+    }
+
+    usort($contents, function ($a, $b) {
+        if ($a['type'] == $b['type']) {
+            return strcasecmp($a['fullName'], $b['fullName']);
+        }
+        return ($a['type'] == 'directory') ? -1 : 1;
+    });
+
+    return $contents;
+}
+
+function getParentDirectory($path)
+{
+    return dirname($path);
+}
+
+// Add this near the top of the file, where other variables are initialized
+$currentPath = isset($_GET['path']) ? $_GET['path'] : getcwd();
+$directoryContents = getDirectoryContents($currentPath);
+$parentDirectory = getParentDirectory($currentPath);
+
+// Add this to handle AJAX requests for directory contents
+if (isset($_GET['action']) && $_GET['action'] === 'get_directory_contents') {
+    header('Content-Type: application/json');
+    echo json_encode([
+        'contents' => getDirectoryContents($_GET['path']),
+        'parent' => getParentDirectory($_GET['path'])
+    ]);
+    exit;
+}
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (isset($_POST['database_path'])) {
         $databasePath = $_POST['database_path'];
@@ -144,40 +199,12 @@ function getTableStructure(PDO $db, string $table): array
     return $stmt->fetchAll(PDO::FETCH_ASSOC);
 }
 
-// Function to get table data with pagination, ordered by latest first
+// Function to get table data with pagination
 function getTableData(PDO $db, string $table, int $page, int $perPage): array
 {
     $offset = ($page - 1) * $perPage;
     $escapedTable = SQLite3::escapeString($table);
-
-    // Get the table structure to find the primary key or a timestamp column
-    $structure = getTableStructure($db, $table);
-    $orderByColumn = null;
-
-    foreach ($structure as $column) {
-        if ($column['pk'] == 1) {
-            // If we find a primary key, use it for ordering
-            $orderByColumn = $column['name'];
-            break;
-        } elseif (
-            stripos($column['name'], 'timestamp') !== false ||
-            stripos($column['name'], 'created_at') !== false ||
-            stripos($column['name'], 'updated_at') !== false
-        ) {
-            // If we find a timestamp-like column, use it for ordering
-            $orderByColumn = $column['name'];
-            break;
-        }
-    }
-
-    // Construct the SQL query with ORDER BY clause if we found a suitable column
-    $sql = "SELECT * FROM \"$escapedTable\"";
-    if ($orderByColumn) {
-        $sql .= " ORDER BY \"$orderByColumn\" DESC";
-    }
-    $sql .= " LIMIT :limit OFFSET :offset";
-
-    $stmt = $db->prepare($sql);
+    $stmt = $db->prepare("SELECT * FROM \"$escapedTable\" LIMIT :limit OFFSET :offset");
     $stmt->bindValue(':limit', $perPage, PDO::PARAM_INT);
     $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
     $stmt->execute();
