@@ -1,0 +1,11 @@
+#!/usr/bin/env php
+<?php
+
+// Only execute the following code if this file is the main entry point
+if (php_sapi_name() !== 'cli' || isset($_SERVER['REQUEST_URI'])) {
+    require __DIR__ . '/web.php';
+    exit;
+}
+
+// CLI logic
+require __DIR__ . '/cli.php';
