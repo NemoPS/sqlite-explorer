@@ -199,12 +199,37 @@ function getTableStructure(PDO $db, string $table): array
     return $stmt->fetchAll(PDO::FETCH_ASSOC);
 }
 
-// Function to get table data with pagination
+// Function to get table data with pagination and sorting
 function getTableData(PDO $db, string $table, int $page, int $perPage): array
 {
     $offset = ($page - 1) * $perPage;
     $escapedTable = SQLite3::escapeString($table);
-    $stmt = $db->prepare("SELECT * FROM \"$escapedTable\" LIMIT :limit OFFSET :offset");
+
+    // Get table structure to check for ID or timestamp columns
+    $structure = getTableStructure($db, $table);
+    $idColumn = null;
+    $timestampColumn = null;
+
+    foreach ($structure as $column) {
+        $columnName = strtolower($column['name']);
+        if ($columnName === 'id' || $columnName === 'rowid') {
+            $idColumn = $column['name'];
+            break;
+        } elseif (strpos($columnName, 'time') !== false || strpos($columnName, 'date') !== false) {
+            $timestampColumn = $column['name'];
+        }
+    }
+
+    // Prepare the SQL query with appropriate sorting
+    if ($idColumn) {
+        $sql = "SELECT * FROM \"$escapedTable\" ORDER BY \"$idColumn\" DESC LIMIT :limit OFFSET :offset";
+    } elseif ($timestampColumn) {
+        $sql = "SELECT * FROM \"$escapedTable\" ORDER BY \"$timestampColumn\" DESC LIMIT :limit OFFSET :offset";
+    } else {
+        $sql = "SELECT * FROM \"$escapedTable\" LIMIT :limit OFFSET :offset";
+    }
+
+    $stmt = $db->prepare($sql);
     $stmt->bindValue(':limit', $perPage, PDO::PARAM_INT);
     $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
     $stmt->execute();
