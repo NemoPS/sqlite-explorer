@@ -55,59 +55,92 @@
                             </li>
                         <?php endforeach; ?>
                     </ul>
+                    <?php
+                    $totalTablePages = ceil($totalTables / $tablesPerPage);
+                    if ($totalTablePages > 1):
+                    ?>
+                        <div class="mt-4">
+                            <?php for ($i = 1; $i <= $totalTablePages; $i++): ?>
+                                <a href="?table_page=<?= $i ?>" class="inline-block px-2 py-1 mr-1 mb-1 <?= $i === $currentTablePage ? 'bg-blue-500 text-white' : 'bg-gray-200' ?>"><?= $i ?></a>
+                            <?php endfor; ?>
+                        </div>
+                    <?php endif; ?>
                 </div>
                 <div class="w-full md:w-3/4 bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4">
                     <?php if ($selectedTable): ?>
                         <h2 class="text-2xl font-semibold mb-4">Table: <?= htmlspecialchars($selectedTable) ?></h2>
-                        <h3 class="text-xl font-semibold mb-2">Structure</h3>
-                        <div class="table-wrapper">
-                            <table class="table-auto w-full mb-4">
-                                <thead>
-                                    <tr class="bg-gray-200">
-                                        <th class="px-4 py-2">Column</th>
-                                        <th class="px-4 py-2">Type</th>
-                                        <th class="px-4 py-2">Nullable</th>
-                                        <th class="px-4 py-2">Default</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <?php foreach ($structure as $column): ?>
-                                        <tr>
-                                            <td class="border px-4 py-2"><?= htmlspecialchars($column['name']) ?></td>
-                                            <td class="border px-4 py-2"><?= htmlspecialchars($column['type']) ?></td>
-                                            <td class="border px-4 py-2"><?= $column['notnull'] ? 'No' : 'Yes' ?></td>
-                                            <td class="border px-4 py-2"><?= htmlspecialchars($column['dflt_value'] ?? 'NULL') ?></td>
-                                        </tr>
-                                    <?php endforeach; ?>
-                                </tbody>
-                            </table>
+
+                        <!-- Tabs -->
+                        <div class="mb-4">
+                            <button onclick="showTab('structure')" class="px-4 py-2 text-sm font-medium text-center text-gray-500 bg-gray-100 border-b-2 border-transparent hover:text-gray-600 hover:border-gray-300 focus:outline-none" id="structure-tab">Structure</button>
+                            <button onclick="showTab('data')" class="px-4 py-2 text-sm font-medium text-center text-gray-500 bg-gray-100 border-b-2 border-transparent hover:text-gray-600 hover:border-gray-300 focus:outline-none" id="data-tab">Data</button>
                         </div>
 
-                        <h3 class="text-xl font-semibold mb-2">Data (First 100 rows)</h3>
-                        <?php if ($data): ?>
+                        <!-- Structure Tab Content -->
+                        <div id="structure-content" class="tab-content">
+                            <h3 class="text-xl font-semibold mb-2">Structure</h3>
                             <div class="table-wrapper">
-                                <table class="table-auto w-full">
+                                <table class="table-auto w-full mb-4">
                                     <thead>
                                         <tr class="bg-gray-200">
-                                            <?php foreach (array_keys($data[0]) as $column): ?>
-                                                <th class="px-4 py-2"><?= htmlspecialchars($column) ?></th>
-                                            <?php endforeach; ?>
+                                            <th class="px-4 py-2">Column</th>
+                                            <th class="px-4 py-2">Type</th>
+                                            <th class="px-4 py-2">Nullable</th>
+                                            <th class="px-4 py-2">Default</th>
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        <?php foreach ($data as $row): ?>
+                                        <?php foreach ($structure as $column): ?>
                                             <tr>
-                                                <?php foreach ($row as $value): ?>
-                                                    <td class="border px-4 py-2"><?= htmlspecialchars((string)$value) ?></td>
-                                                <?php endforeach; ?>
+                                                <td class="border px-4 py-2"><?= htmlspecialchars($column['name']) ?></td>
+                                                <td class="border px-4 py-2"><?= htmlspecialchars($column['type']) ?></td>
+                                                <td class="border px-4 py-2"><?= $column['notnull'] ? 'No' : 'Yes' ?></td>
+                                                <td class="border px-4 py-2"><?= htmlspecialchars($column['dflt_value'] ?? 'NULL') ?></td>
                                             </tr>
                                         <?php endforeach; ?>
                                     </tbody>
                                 </table>
                             </div>
-                        <?php else: ?>
-                            <p>No data found in this table.</p>
-                        <?php endif; ?>
+                        </div>
+
+                        <!-- Data Tab Content -->
+                        <div id="data-content" class="tab-content" style="display: none;">
+                            <h3 class="text-xl font-semibold mb-2">Data (Page <?= $currentRowPage ?>)</h3>
+                            <?php if ($data): ?>
+                                <div class="table-wrapper">
+                                    <table class="table-auto w-full">
+                                        <thead>
+                                            <tr class="bg-gray-200">
+                                                <?php foreach (array_keys($data[0]) as $column): ?>
+                                                    <th class="px-4 py-2"><?= htmlspecialchars($column) ?></th>
+                                                <?php endforeach; ?>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <?php foreach ($data as $row): ?>
+                                                <tr>
+                                                    <?php foreach ($row as $value): ?>
+                                                        <td class="border px-4 py-2"><?= htmlspecialchars((string)$value) ?></td>
+                                                    <?php endforeach; ?>
+                                                </tr>
+                                            <?php endforeach; ?>
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <?php
+                                $totalRowPages = ceil($totalRows / $rowsPerPage);
+                                if ($totalRowPages > 1):
+                                ?>
+                                    <div class="mt-4">
+                                        <?php for ($i = 1; $i <= $totalRowPages; $i++): ?>
+                                            <a href="?table=<?= urlencode($selectedTable) ?>&row_page=<?= $i ?>" class="inline-block px-2 py-1 mr-1 mb-1 <?= $i === $currentRowPage ? 'bg-blue-500 text-white' : 'bg-gray-200' ?>"><?= $i ?></a>
+                                        <?php endfor; ?>
+                                    </div>
+                                <?php endif; ?>
+                            <?php else: ?>
+                                <p>No data found in this table.</p>
+                            <?php endif; ?>
+                        </div>
                     <?php else: ?>
                         <p class="text-xl">Select a table from the list on the left to view its structure and data.</p>
                     <?php endif; ?>
@@ -123,6 +156,26 @@
                 document.getElementById('file_name').value = file.name;
             }
         });
+
+        function showTab(tabName) {
+            var tabs = ['structure', 'data'];
+            tabs.forEach(function(tab) {
+                var content = document.getElementById(tab + '-content');
+                var tabButton = document.getElementById(tab + '-tab');
+                if (tab === tabName) {
+                    content.style.display = 'block';
+                    tabButton.classList.add('text-blue-600', 'border-blue-600');
+                    tabButton.classList.remove('text-gray-500', 'border-transparent');
+                } else {
+                    content.style.display = 'none';
+                    tabButton.classList.remove('text-blue-600', 'border-blue-600');
+                    tabButton.classList.add('text-gray-500', 'border-transparent');
+                }
+            });
+        }
+
+        // Show the structure tab by default
+        showTab('structure');
     </script>
 </body>
 

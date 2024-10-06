@@ -14,6 +14,12 @@ $databasePath = '';
 $currentDatabase = '';
 $selectedTable = '';
 
+// Define pagination variables
+$tablesPerPage = 20;
+$rowsPerPage = 100;
+$currentTablePage = isset($_GET['table_page']) ? max(1, intval($_GET['table_page'])) : 1;
+$currentRowPage = isset($_GET['row_page']) ? max(1, intval($_GET['row_page'])) : 1;
+
 // Function to get a persistent temporary file path
 function getTempFilePath($originalName)
 {
@@ -46,7 +52,8 @@ if ($databasePath) {
     try {
         $db = new PDO("sqlite:$databasePath");
         $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-        $tables = getTables($db);
+        $totalTables = getTotalTables($db);
+        $tables = getTables($db, $currentTablePage, $tablesPerPage);
     } catch (PDOException $e) {
         $error = "Error: " . $e->getMessage();
     }
@@ -58,7 +65,8 @@ if (isset($_GET['table'])) {
     if ($db) {
         if (tableExists($db, $selectedTable)) {
             $structure = getTableStructure($db, $selectedTable);
-            $data = getTableData($db, $selectedTable);
+            $totalRows = getTotalRows($db, $selectedTable);
+            $data = getTableData($db, $selectedTable, $currentRowPage, $rowsPerPage);
         } else {
             $error = "Error: The table '$selectedTable' does not exist in the database.";
         }
@@ -70,11 +78,22 @@ if (isset($_GET['table'])) {
 // Include the HTML template
 include 'template.php';
 
-// Function to get all tables in the database
-function getTables(PDO $db): array
+// Function to get all tables in the database with pagination
+function getTables(PDO $db, int $page, int $perPage): array
 {
-    $stmt = $db->query("SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' ORDER BY name ASC");
+    $offset = ($page - 1) * $perPage;
+    $stmt = $db->prepare("SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' ORDER BY name ASC LIMIT :limit OFFSET :offset");
+    $stmt->bindValue(':limit', $perPage, PDO::PARAM_INT);
+    $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
+    $stmt->execute();
     return $stmt->fetchAll(PDO::FETCH_COLUMN);
+}
+
+// Function to get total number of tables
+function getTotalTables(PDO $db): int
+{
+    $stmt = $db->query("SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'");
+    return $stmt->fetchColumn();
 }
 
 // Function to check if a table exists
@@ -93,12 +112,22 @@ function getTableStructure(PDO $db, string $table): array
     return $stmt->fetchAll(PDO::FETCH_ASSOC);
 }
 
-// Function to get table data
-function getTableData(PDO $db, string $table, int $limit = 100): array
+// Function to get table data with pagination
+function getTableData(PDO $db, string $table, int $page, int $perPage): array
 {
+    $offset = ($page - 1) * $perPage;
     $escapedTable = SQLite3::escapeString($table);
-    $stmt = $db->prepare("SELECT * FROM \"$escapedTable\" LIMIT :limit");
-    $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
+    $stmt = $db->prepare("SELECT * FROM \"$escapedTable\" LIMIT :limit OFFSET :offset");
+    $stmt->bindValue(':limit', $perPage, PDO::PARAM_INT);
+    $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
     $stmt->execute();
     return $stmt->fetchAll(PDO::FETCH_ASSOC);
+}
+
+// Function to get total number of rows in a table
+function getTotalRows(PDO $db, string $table): int
+{
+    $escapedTable = SQLite3::escapeString($table);
+    $stmt = $db->query("SELECT COUNT(*) FROM \"$escapedTable\"");
+    return $stmt->fetchColumn();
 }
