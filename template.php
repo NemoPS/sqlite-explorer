@@ -40,10 +40,10 @@
                             Browse
                         </button>
                     </div>
-                    <input type="submit" value="Open Database" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
+                    <input type="submit" value="Open Database" class="bg-indigo-500 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
                 </form>
                 <?php if ($currentDatabase): ?>
-                    <div class="text-sm text-blue-700">
+                    <div class="text-sm text-indigo-700">
                         Current Database: <?= htmlspecialchars($currentDatabase) ?>
                     </div>
                 <?php endif; ?>
@@ -63,7 +63,7 @@
             <ul>
                 <?php foreach ($tables as $table): ?>
                     <li class="mb-1">
-                        <a href="?table=<?= urlencode($table) ?>" class="text-blue-500 hover:text-blue-800"><?= htmlspecialchars($table) ?></a>
+                        <a href="?table=<?= urlencode($table) ?>" class="text-indigo-500 hover:text-blue-800"><?= htmlspecialchars($table) ?></a>
                     </li>
                 <?php endforeach; ?>
             </ul>
@@ -74,8 +74,8 @@
                 <h2 class="text-2xl font-semibold mb-4">Table: <?= htmlspecialchars($selectedTable) ?></h2>
 
                 <div class="mb-4">
-                    <button @click="activeTab = 'data'" :class="{ 'bg-blue-500 text-white': activeTab === 'data', 'bg-gray-200': activeTab !== 'data' }" class="px-4 py-2 rounded-l-md">Data</button>
-                    <button @click="activeTab = 'structure'" :class="{ 'bg-blue-500 text-white': activeTab === 'structure', 'bg-gray-200': activeTab !== 'structure' }" class="px-4 py-2 rounded-r-md">Structure</button>
+                    <button @click="activeTab = 'data'" :class="{ 'bg-indigo-500 text-white': activeTab === 'data', 'bg-gray-200': activeTab !== 'data' }" class="px-4 py-2 rounded-l-md">Data</button>
+                    <button @click="activeTab = 'structure'" :class="{ 'bg-indigo-500 text-white': activeTab === 'structure', 'bg-gray-200': activeTab !== 'structure' }" class="px-4 py-2 rounded-r-md">Structure</button>
                 </div>
 
                 <div x-show="activeTab === 'data'">
@@ -86,15 +86,15 @@
                                     <thead class="bg-gray-50 sticky top-0 z-10">
                                         <tr>
                                             <?php foreach (array_keys($data[0]) as $column): ?>
-                                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"><?= htmlspecialchars($column) ?></th>
+                                                <th class="px-6 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"><?= htmlspecialchars($column) ?></th>
                                             <?php endforeach; ?>
                                         </tr>
                                     </thead>
                                     <tbody class="bg-white divide-y divide-gray-200">
-                                        <?php foreach ($data as $row): ?>
-                                            <tr>
+                                        <?php foreach ($data as $index => $row): ?>
+                                            <tr class="<?= $index % 2 === 0 ? 'bg-white' : 'bg-gray-50' ?>">
                                                 <?php foreach ($row as $value): ?>
-                                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500"><?= htmlspecialchars((string)$value) ?></td>
+                                                    <td class="px-6 py-2 whitespace-nowrap text-sm text-gray-500"><?= htmlspecialchars((string)$value) ?></td>
                                                 <?php endforeach; ?>
                                             </tr>
                                         <?php endforeach; ?>
@@ -119,7 +119,7 @@
                                 }
 
                                 for ($i = $start; $i <= $end; $i++) {
-                                    $class = ($i == $currentRowPage) ? 'bg-blue-500 text-white' : 'bg-gray-200 hover:bg-gray-300';
+                                    $class = ($i == $currentRowPage) ? 'bg-indigo-500 text-white' : 'bg-gray-200 hover:bg-gray-300';
                                     echo "<a href='?table=" . urlencode($selectedTable) . "&row_page=$i' class='px-2 py-1 text-xs $class rounded'>$i</a>";
                                 }
 
@@ -151,10 +151,10 @@
                             <tbody class="bg-white divide-y divide-gray-200">
                                 <?php foreach ($structure as $column): ?>
                                     <tr>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500"><?= htmlspecialchars($column['name']) ?></td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500"><?= htmlspecialchars($column['type']) ?></td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500"><?= $column['notnull'] ? 'No' : 'Yes' ?></td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500"><?= htmlspecialchars($column['dflt_value'] ?? 'NULL') ?></td>
+                                        <td class="px-6 py-2 whitespace-nowrap text-sm text-gray-500"><?= htmlspecialchars($column['name']) ?></td>
+                                        <td class="px-6 py-2 whitespace-nowrap text-sm text-gray-500"><?= htmlspecialchars($column['type']) ?></td>
+                                        <td class="px-6 py-2 whitespace-nowrap text-sm text-gray-500"><?= $column['notnull'] ? 'No' : 'Yes' ?></td>
+                                        <td class="px-6 py-2 whitespace-nowrap text-sm text-gray-500"><?= htmlspecialchars($column['dflt_value'] ?? 'NULL') ?></td>
                                     </tr>
                                 <?php endforeach; ?>
                             </tbody>
