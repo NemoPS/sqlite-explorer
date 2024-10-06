@@ -82,6 +82,35 @@ if (isset($_GET['table'])) {
     }
 }
 
+// Add this near the top of the file, where other actions are handled
+if (isset($_GET['action']) && $_GET['action'] === 'insert' && isset($_GET['table'])) {
+    $selectedTable = $_GET['table'];
+    if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+        $columns = [];
+        $values = [];
+        foreach ($structure as $column) {
+            $columnName = $column['name'];
+            if (isset($_POST[$columnName]) && $column['pk'] != 1) {
+                $columns[] = $columnName;
+                $values[] = $_POST[$columnName];
+            }
+        }
+
+        if (!empty($columns)) {
+            $placeholders = array_fill(0, count($columns), '?');
+            $sql = "INSERT INTO \"$selectedTable\" (" . implode(', ', $columns) . ") VALUES (" . implode(', ', $placeholders) . ")";
+
+            try {
+                $stmt = $db->prepare($sql);
+                $stmt->execute($values);
+                $message = "Data inserted successfully.";
+            } catch (PDOException $e) {
+                $error = "Error inserting data: " . $e->getMessage();
+            }
+        }
+    }
+}
+
 // Include the HTML template
 include 'template.php';
 
@@ -138,3 +167,5 @@ function getTotalRows(PDO $db, string $table): int
     $stmt = $db->query("SELECT COUNT(*) FROM \"$escapedTable\"");
     return $stmt->fetchColumn();
 }
+
+require_once 'utils.php';
