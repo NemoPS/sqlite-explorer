@@ -19,11 +19,7 @@
                 </div>
                 <input type="submit" value="Open Database" class="bg-indigo-500 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
             </form>
-            <?php if ($currentDatabase): ?>
-                <div class="text-sm text-indigo-700">
-                    Current Database: <?= htmlspecialchars($currentDatabase) ?>
-                </div>
-            <?php endif; ?>
+
         </div>
     </div>
 </header>

@@ -144,12 +144,40 @@ function getTableStructure(PDO $db, string $table): array
     return $stmt->fetchAll(PDO::FETCH_ASSOC);
 }
 
-// Function to get table data with pagination
+// Function to get table data with pagination, ordered by latest first
 function getTableData(PDO $db, string $table, int $page, int $perPage): array
 {
     $offset = ($page - 1) * $perPage;
     $escapedTable = SQLite3::escapeString($table);
-    $stmt = $db->prepare("SELECT * FROM \"$escapedTable\" LIMIT :limit OFFSET :offset");
+
+    // Get the table structure to find the primary key or a timestamp column
+    $structure = getTableStructure($db, $table);
+    $orderByColumn = null;
+
+    foreach ($structure as $column) {
+        if ($column['pk'] == 1) {
+            // If we find a primary key, use it for ordering
+            $orderByColumn = $column['name'];
+            break;
+        } elseif (
+            stripos($column['name'], 'timestamp') !== false ||
+            stripos($column['name'], 'created_at') !== false ||
+            stripos($column['name'], 'updated_at') !== false
+        ) {
+            // If we find a timestamp-like column, use it for ordering
+            $orderByColumn = $column['name'];
+            break;
+        }
+    }
+
+    // Construct the SQL query with ORDER BY clause if we found a suitable column
+    $sql = "SELECT * FROM \"$escapedTable\"";
+    if ($orderByColumn) {
+        $sql .= " ORDER BY \"$orderByColumn\" DESC";
+    }
+    $sql .= " LIMIT :limit OFFSET :offset";
+
+    $stmt = $db->prepare($sql);
     $stmt->bindValue(':limit', $perPage, PDO::PARAM_INT);
     $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
     $stmt->execute();
