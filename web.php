@@ -28,17 +28,13 @@ function getTempFilePath($originalName)
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    if (isset($_FILES['database_file'])) {
-        $uploadedFile = $_FILES['database_file'];
-        $originalName = $uploadedFile['name'];
-        $tempFilePath = getTempFilePath($originalName);
-
-        if (move_uploaded_file($uploadedFile['tmp_name'], $tempFilePath)) {
-            $databasePath = $tempFilePath;
+    if (isset($_POST['database_path'])) {
+        $databasePath = $_POST['database_path'];
+        if (file_exists($databasePath) && is_readable($databasePath)) {
             $_SESSION['current_database'] = $databasePath;
-            $_SESSION['original_filename'] = $originalName;
+            $_SESSION['original_filename'] = basename($databasePath);
         } else {
-            $error = "Error: Failed to move the uploaded file.";
+            $error = "Error: The specified database file does not exist or is not readable.";
         }
     }
 }
@@ -167,5 +163,3 @@ function getTotalRows(PDO $db, string $table): int
     $stmt = $db->query("SELECT COUNT(*) FROM \"$escapedTable\"");
     return $stmt->fetchColumn();
 }
-
-require_once 'utils.php';

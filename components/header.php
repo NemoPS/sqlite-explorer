@@ -15,11 +15,7 @@
             <h2 class="text-lg font-semibold mb-2">Open SQLite Database</h2>
             <form action="" method="post" enctype="multipart/form-data" class="mb-2">
                 <div class="flex items-center mb-2">
-                    <input type="text" id="file_name" readonly placeholder="Select a SQLite database file" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
-                    <input type="file" id="file_selector" name="database_file" accept=".sqlite,.db" class="hidden">
-                    <button type="button" onclick="document.getElementById('file_selector').click();" class="ml-2 bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
-                        Browse
-                    </button>
+                    <input type="text" name="database_path" placeholder="Select a SQLite database path" class="shadow border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
                 </div>
                 <input type="submit" value="Open Database" class="bg-indigo-500 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
             </form>

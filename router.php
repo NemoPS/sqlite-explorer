@@ -13,6 +13,5 @@ $file = __DIR__ . $uri;
 if (is_file($file)) {
     return false; // Let the server handle existing files
 }
-
 // If no file exists, route to web.php
 require __DIR__ . '/web.php';
