@@ -18,15 +18,23 @@
     <?php include 'components/header.php'; ?>
 
     <?php if ($error): ?>
-        <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-2 rounded relative" role="alert">
-            <span class="block sm:inline"><?= htmlspecialchars($error) ?></span>
+        <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 shadow-md" role="alert">
+            <div class="flex">
+                <div class="py-1"><svg class="fill-current h-6 w-6 text-red-500 mr-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                        <path d="M2.93 17.07A10 10 0 1 1 17.07 2.93 10 10 0 0 1 2.93 17.07zm12.73-1.41A8 8 0 1 0 4.34 4.34a8 8 0 0 0 11.32 11.32zM9 11V9h2v6H9v-4zm0-6h2v2H9V5z" />
+                    </svg></div>
+                <div>
+                    <p class="font-bold">Error</p>
+                    <p class="text-sm"><?= htmlspecialchars($error) ?></p>
+                </div>
+            </div>
         </div>
     <?php endif; ?>
 
     <div class="flex-1 flex overflow-hidden p-4">
         <?php include 'components/sidebar.php'; ?>
 
-        <main class="flex-1 overflow-hidden bg-white shadow-md ml-4 p-4">
+        <main class="flex-1 overflow-hidden bg-white shadow-md ml-4 p-4 flex flex-col">
             <?php if ($selectedTable): ?>
                 <h2 class="text-2xl font-semibold mb-4">Table: <?= htmlspecialchars($selectedTable) ?></h2>
 
@@ -36,16 +44,16 @@
                     <button @click="activeTab = 'insert'" :class="{ 'bg-blue-500 text-white': activeTab === 'insert', 'bg-gray-200 text-gray-700': activeTab !== 'insert' }" class="px-4 py-2 rounded-r-md">Insert</button>
                 </div>
 
-                <div x-show="activeTab === 'data'">
+                <div x-show="activeTab === 'data'" class="flex-1 overflow-auto">
                     <?php include 'components/data_table.php'; ?>
                     <?php include 'components/pagination.php'; ?>
                 </div>
 
-                <div x-show="activeTab === 'structure'">
+                <div x-show="activeTab === 'structure'" class="flex-1 overflow-auto">
                     <?php include 'components/structure_table.php'; ?>
                 </div>
 
-                <div x-show="activeTab === 'insert'">
+                <div x-show="activeTab === 'insert'" class="flex-1 overflow-auto">
                     <?php include 'components/insert_form.php'; ?>
                 </div>
             <?php else: ?>
