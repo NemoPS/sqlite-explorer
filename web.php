@@ -97,6 +97,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 if (isset($_SESSION['current_database'])) {
     $databasePath = $_SESSION['current_database'];
     $currentDatabase = $_SESSION['original_filename'] ?? basename($databasePath);
+    $currentPath = dirname($databasePath); // Add this line to set the current path
 }
 
 if ($databasePath) {

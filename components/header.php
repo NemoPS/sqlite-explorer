@@ -15,7 +15,7 @@
             <h2 class="text-lg font-semibold mb-2">Open SQLite Database</h2>
             <form action="" method="post" enctype="multipart/form-data" class="mb-2">
                 <div class="flex items-center mb-2">
-                    <input type="text" name="database_path" x-model="currentPath" placeholder="Select a SQLite database path" class="shadow border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                    <input type="text" name="database_path" x-model="currentPath" placeholder="Select a SQLite database path" readonly class="shadow border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
                     <button type="button" @click="showFileExplorer = true" class="ml-2 bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
                         Browse
                     </button>
@@ -35,7 +35,11 @@
                         <span x-text="currentPath"></span>
                     </div>
                     <div class="text-left mb-4">
-                        <button @click="navigateDirectory(parentDirectory)" class="text-blue-500 hover:underline">..</button>
+                        <button @click="navigateDirectory(parentDirectory)" class="text-blue-500 hover:text-blue-700 focus:outline-none" title="Go to parent directory">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 11l5-5m0 0l5 5m-5-5v12"></path>
+                            </svg>
+                        </button>
                     </div>
                     <ul class="max-h-60 overflow-y-auto">
                         <template x-for="item in contents" :key="item.path">
@@ -51,7 +55,7 @@
                                 <template x-if="item.type === 'sqlite'">
                                     <button @click="selectFile(item.path)" class="text-green-500 hover:underline" :title="item.fullName">
                                         <svg class="w-4 h-4 inline-block mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4"></path>
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21-3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4"></path>
                                         </svg>
                                         <span x-text="item.name"></span>
                                     </button>
@@ -74,7 +78,7 @@
             return {
                 headerExpanded: false,
                 showFileExplorer: false,
-                currentPath: '<?= htmlspecialchars($currentPath) ?>',
+                currentPath: '<?= htmlspecialchars($_SESSION['current_database'] ?? $currentPath) ?>',
                 contents: <?= json_encode($directoryContents) ?>,
                 parentDirectory: '<?= htmlspecialchars($parentDirectory) ?>',
                 navigateDirectory(path) {
