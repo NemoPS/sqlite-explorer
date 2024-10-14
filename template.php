@@ -14,7 +14,7 @@
     </style>
 </head>
 
-<body class="h-full flex flex-col" x-data="{ headerExpanded: false, activeTab: '<?= $_GET['activeTab'] ?? 'data' ?>' }">
+<body class="h-full flex flex-col" x-data="{ headerExpanded: false, activeTab: '<?= $activeTab ?>' }">
     <?php include 'components/header.php'; ?>
 
     <?php if ($error): ?>
@@ -36,7 +36,12 @@
 
         <main class="flex-1 overflow-hidden bg-white shadow-md ml-4 p-4 flex flex-col">
             <?php if ($selectedTable): ?>
-                <h2 class="text-2xl font-semibold mb-4">Table: <?= htmlspecialchars($selectedTable) ?></h2>
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-2xl font-semibold">Table: <?= htmlspecialchars($selectedTable) ?></h2>
+                    <?php if ($activeTab === 'data'): ?>
+                        <?php include 'components/pagination.php'; ?>
+                    <?php endif; ?>
+                </div>
 
                 <div class="mb-4">
                     <button @click="activeTab = 'data'" :class="{ 'bg-blue-500 text-white': activeTab === 'data', 'bg-gray-200 text-gray-700': activeTab !== 'data' }" class="px-4 py-2 rounded-l-md">Data</button>
@@ -46,7 +51,6 @@
 
                 <div x-show="activeTab === 'data'" class="flex-1 overflow-auto">
                     <?php include 'components/data_table.php'; ?>
-                    <?php include 'components/pagination.php'; ?>
                 </div>
 
                 <div x-show="activeTab === 'structure'" class="flex-1 overflow-auto">

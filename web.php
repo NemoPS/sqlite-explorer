@@ -13,6 +13,7 @@ $error = '';
 $databasePath = '';
 $currentDatabase = '';
 $selectedTable = '';
+$activeTab = $_GET['activeTab'] ?? 'data';
 
 // Define pagination variables
 $tablesPerPage = 20;

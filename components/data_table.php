@@ -9,7 +9,7 @@ function truncateText($text, $length = 50)
 ?>
 
 <?php if ($data): ?>
-    <div class="h-[calc(100vh-250px)] overflow-hidden" id="tableWrapper">
+    <div class="h-[calc(100vh-220px)] overflow-hidden" id="tableWrapper">
         <div class="overflow-auto h-full" id="tableContainer">
             <table class="min-w-full divide-y divide-gray-200">
                 <thead class="bg-gray-50 sticky top-0 z-10">
@@ -38,7 +38,6 @@ function truncateText($text, $length = 50)
             </table>
         </div>
     </div>
-    <?php include 'pagination.php'; ?>
 <?php else: ?>
     <p>No data found in this table.</p>
 <?php endif; ?>
