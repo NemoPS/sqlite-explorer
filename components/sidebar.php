@@ -1,14 +1,18 @@
-<aside class="w-64 bg-white shadow-md overflow-y-auto p-4">
-    <?php if ($databasePath): ?>
-        <div class="text-xs">
-            Current Database: <br> <span class="text-indigo-700"><?= htmlspecialchars($databasePath) ?></span>
-        </div>
-    <?php endif; ?>
-    <h2 class=" text-lg font-semibold mb-2">Tables</h2>
-    <ul>
+<aside class="w-64 bg-gray-100 overflow-y-auto flex flex-col border-r border-gray-200">
+    <div class="p-4 border-b border-gray-200">
+        <h1 class="text-xl font-bold flex items-center">
+            <i class="icon-database w-6 h-6 mr-2"></i>
+            Database Tables
+        </h1>
+        <?php include 'components/header.php'; ?>
+    </div>
+    <ul class="flex-1">
         <?php foreach ($tables as $table): ?>
-            <li class="mb-1">
-                <a href="?table=<?= urlencode($table) ?>" class="text-indigo-500 hover:text-blue-800"><?= htmlspecialchars($table) ?></a>
+            <li>
+                <a href="?table=<?= urlencode($table) ?>" class="block px-4 py-2 hover:bg-gray-200 <?= $selectedTable === $table ? 'bg-gray-200' : '' ?>">
+                    <i class="icon-table w-4 h-4 inline-block mr-2"></i>
+                    <?= htmlspecialchars($table) ?>
+                </a>
             </li>
         <?php endforeach; ?>
     </ul>

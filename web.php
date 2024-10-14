@@ -139,37 +139,171 @@ if (isset($_GET['table'])) {
 if (isset($_GET['action']) && $_GET['action'] === 'insert' && isset($_GET['table'])) {
     $selectedTable = $_GET['table'];
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+        if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest') {
+            header('Content-Type: application/json');
+
+            $jsonData = file_get_contents('php://input');
+            $formData = json_decode($jsonData, true);
+
+            if ($formData === null) {
+                echo json_encode(['error' => true, 'message' => 'Invalid JSON data']);
+                exit;
+            }
+
+            try {
+                $structure = getTableStructure($db, $selectedTable);
+                $columnTypes = [];
+                $autoIncrementColumn = null;
+
+                foreach ($structure as $column) {
+                    $columnTypes[$column['name']] = $column['type'];
+                    if ($column['pk'] == 1 && $column['type'] == 'INTEGER') {
+                        $autoIncrementColumn = $column['name'];
+                    }
+                }
+
+                // Always remove the 'id' column from formData
+                unset($formData['id']);
+
+                $columns = implode(', ', array_keys($formData));
+                $placeholders = implode(', ', array_fill(0, count($formData), '?'));
+                $sql = "INSERT INTO " . SQLite3::escapeString($selectedTable) . " ($columns) VALUES ($placeholders)";
+
+                error_log("SQL: $sql");
+                error_log("Form Data: " . print_r($formData, true));
+
+                $stmt = $db->prepare($sql);
+                if ($stmt === false) {
+                    throw new Exception("Failed to prepare statement: " . print_r($db->errorInfo(), true));
+                }
+
+                $i = 1;
+                foreach ($formData as $column => $value) {
+                    $type = PDO::PARAM_STR;
+                    if (isset($columnTypes[$column])) {
+                        switch (strtolower($columnTypes[$column])) {
+                            case 'integer':
+                                $type = PDO::PARAM_INT;
+                                $value = $value === '' ? null : (int)$value;
+                                break;
+                            case 'real':
+                                $type = PDO::PARAM_STR;
+                                $value = $value === '' ? null : (float)$value;
+                                break;
+                            case 'boolean':
+                                $type = PDO::PARAM_BOOL;
+                                $value = $value === '' ? null : (bool)$value;
+                                break;
+                            case 'blob':
+                                $type = PDO::PARAM_LOB;
+                                break;
+                        }
+                    }
+                    $stmt->bindValue($i, $value, $type);
+                    error_log("Binding: Column=$column, Value=$value, Type=$type");
+                    $i++;
+                }
+
+                $result = $stmt->execute();
+                if ($result === false) {
+                    throw new Exception("Failed to execute statement: " . print_r($stmt->errorInfo(), true));
+                }
+
+                $lastInsertId = $db->lastInsertId();
+                error_log("Last Insert ID: $lastInsertId");
+
+                echo json_encode(['error' => false, 'message' => 'Data inserted successfully', 'lastInsertId' => $lastInsertId]);
+            } catch (Exception $e) {
+                error_log("Exception: " . $e->getMessage());
+                echo json_encode(['error' => true, 'message' => 'Error inserting data: ' . $e->getMessage()]);
+            }
+            exit;
+        }
+    }
+}
+
+// Add this near the top of the file, where other actions are handled
+if (isset($_GET['action']) && $_GET['action'] === 'delete' && isset($_GET['table'])) {
+    $selectedTable = $_GET['table'];
+    if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         // Check if it's an AJAX request
         if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest') {
             header('Content-Type: application/json');
 
             // Get JSON data from the request body
             $jsonData = file_get_contents('php://input');
-            $formData = json_decode($jsonData, true);
+            $rowData = json_decode($jsonData, true);
 
-            $columns = [];
-            $values = [];
-            foreach ($structure as $column) {
-                $columnName = $column['name'];
-                if (isset($formData[$columnName]) && $column['pk'] != 1) {
-                    $columns[] = $columnName;
-                    $values[] = $formData[$columnName];
-                }
-            }
-
-            if (!empty($columns)) {
-                $placeholders = array_fill(0, count($columns), '?');
-                $sql = "INSERT INTO \"$selectedTable\" (" . implode(', ', $columns) . ") VALUES (" . implode(', ', $placeholders) . ")";
-
+            if (!empty($rowData)) {
                 try {
+                    $whereConditions = [];
+                    $whereValues = [];
+                    foreach ($rowData as $column => $value) {
+                        $whereConditions[] = "\"$column\" = ?";
+                        $whereValues[] = $value;
+                    }
+                    $whereClause = implode(' AND ', $whereConditions);
+
+                    $sql = "DELETE FROM \"$selectedTable\" WHERE $whereClause";
                     $stmt = $db->prepare($sql);
-                    $stmt->execute($values);
-                    echo json_encode(['message' => 'Data inserted successfully.', 'error' => false]);
+                    $stmt->execute($whereValues);
+
+                    if ($stmt->rowCount() > 0) {
+                        echo json_encode(['success' => true, 'message' => 'Row deleted successfully.']);
+                    } else {
+                        echo json_encode(['success' => false, 'message' => 'No rows were deleted.']);
+                    }
                 } catch (PDOException $e) {
-                    echo json_encode(['message' => 'Error inserting data: ' . $e->getMessage(), 'error' => true]);
+                    echo json_encode(['success' => false, 'message' => 'Error deleting row: ' . $e->getMessage()]);
                 }
             } else {
-                echo json_encode(['message' => 'No valid data provided.', 'error' => true]);
+                echo json_encode(['success' => false, 'message' => 'No valid data provided.']);
+            }
+            exit;
+        }
+    }
+}
+
+// Add this near the top of the file, where other actions are handled
+if (isset($_GET['action']) && $_GET['action'] === 'bulk_delete' && isset($_GET['table'])) {
+    $selectedTable = $_GET['table'];
+    if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+        // Check if it's an AJAX request
+        if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest') {
+            header('Content-Type: application/json');
+
+            // Get JSON data from the request body
+            $jsonData = file_get_contents('php://input');
+            $rowsToDelete = json_decode($jsonData, true);
+
+            if (!empty($rowsToDelete)) {
+                try {
+                    $db->beginTransaction();
+                    $deletedCount = 0;
+
+                    foreach ($rowsToDelete as $row) {
+                        $whereConditions = [];
+                        $whereValues = [];
+                        foreach ($row as $column => $value) {
+                            $whereConditions[] = "\"$column\" = ?";
+                            $whereValues[] = $value;
+                        }
+                        $whereClause = implode(' AND ', $whereConditions);
+
+                        $sql = "DELETE FROM \"$selectedTable\" WHERE $whereClause";
+                        $stmt = $db->prepare($sql);
+                        $stmt->execute($whereValues);
+                        $deletedCount += $stmt->rowCount();
+                    }
+
+                    $db->commit();
+                    echo json_encode(['success' => true, 'message' => "$deletedCount row(s) deleted successfully."]);
+                } catch (PDOException $e) {
+                    $db->rollBack();
+                    echo json_encode(['success' => false, 'message' => 'Error deleting rows: ' . $e->getMessage()]);
+                }
+            } else {
+                echo json_encode(['success' => false, 'message' => 'No valid data provided.']);
             }
             exit;
         }

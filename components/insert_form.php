@@ -48,32 +48,50 @@
     function insertForm() {
         return {
             formData: <?= json_encode(array_reduce($structure, function ($carry, $item) {
-                            $carry[$item['name']] = '';
+                            if ($item['name'] !== 'id') {
+                                $carry[$item['name']] = '';
+                            }
                             return $carry;
                         }, [])) ?>,
+            columnTypes: <?= json_encode(array_column($structure, 'type', 'name')) ?>,
             message: '',
             error: false,
             submitForm() {
+                // Remove empty string values for numeric fields and remove 'id' field
+                const cleanedFormData = Object.fromEntries(
+                    Object.entries(this.formData).filter(([key, _]) => key !== 'id').map(([key, value]) => {
+                        const columnType = this.columnTypes[key].toLowerCase();
+                        if ((columnType === 'integer' || columnType === 'real') && value === '') {
+                            return [key, null];
+                        }
+                        return [key, value];
+                    })
+                );
+
+                console.log('Submitting form data:', cleanedFormData);
                 fetch('?action=insert&table=<?= urlencode($selectedTable) ?>', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
                             'X-Requested-With': 'XMLHttpRequest'
                         },
-                        body: JSON.stringify(this.formData)
+                        body: JSON.stringify(cleanedFormData)
                     })
                     .then(response => response.json())
                     .then(data => {
+                        console.log('Server response:', data);
                         this.message = data.message;
                         this.error = data.error;
                         if (!data.error) {
-                            // Force a full page reload with the data tab selected
-                            window.location.href = '?table=<?= urlencode($selectedTable) ?>&activeTab=data&t=' + new Date().getTime();
+                            window.dispatchEvent(new CustomEvent('refresh-data'));
+                            this.$dispatch('close-insert-drawer');
+                        } else {
+                            console.error('Server error:', data);
                         }
                     })
                     .catch(error => {
-                        console.error('Error:', error);
-                        this.message = 'An unexpected error occurred.';
+                        console.error('Fetch error:', error);
+                        this.message = 'An unexpected error occurred: ' + error.message;
                         this.error = true;
                     });
             }

@@ -7,6 +7,7 @@
     <title>SQLite Browser</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/lucide-static@latest/font/lucide.css">
     <style>
         [x-cloak] {
             display: none !important;
@@ -14,57 +15,104 @@
     </style>
 </head>
 
-<body class="h-full flex flex-col" x-data="{ headerExpanded: false, activeTab: '<?= $activeTab ?>' }">
-    <?php include 'components/header.php'; ?>
-
-    <?php if ($error): ?>
-        <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 shadow-md" role="alert">
-            <div class="flex">
-                <div class="py-1"><svg class="fill-current h-6 w-6 text-red-500 mr-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
-                        <path d="M2.93 17.07A10 10 0 1 1 17.07 2.93 10 10 0 0 1 2.93 17.07zm12.73-1.41A8 8 0 1 0 4.34 4.34a8 8 0 0 0 11.32 11.32zM9 11V9h2v6H9v-4zm0-6h2v2H9V5z" />
-                    </svg></div>
-                <div>
-                    <p class="font-bold">Error</p>
-                    <p class="text-sm"><?= htmlspecialchars($error) ?></p>
-                </div>
-            </div>
-        </div>
-    <?php endif; ?>
-
-    <div class="flex-1 flex overflow-hidden p-4">
+<body class="h-full flex flex-col" x-data="mainApp">
+    <div class="flex-1 flex overflow-hidden">
         <?php include 'components/sidebar.php'; ?>
 
-        <main class="flex-1 overflow-hidden bg-white shadow-md ml-4 p-4 flex flex-col">
+        <main class="flex-1 overflow-hidden bg-white flex flex-col h-full">
             <?php if ($selectedTable): ?>
-                <div class="flex justify-between items-center mb-4">
-                    <h2 class="text-2xl font-semibold">Table: <?= htmlspecialchars($selectedTable) ?></h2>
-                    <?php if ($activeTab === 'data'): ?>
+                <div class="bg-gray-100 p-4 flex justify-between items-center border-b border-gray-200">
+                    <h2 class="text-2xl font-bold"><?= htmlspecialchars($selectedTable) ?></h2>
+                    <div class="flex space-x-2">
+                        <button @click="showInsertDrawer = true" class="bg-black hover:bg-gray-800 text-white px-3 py-1 rounded text-sm flex items-center">
+                            <i class="icon-plus w-4 h-4 mr-1"></i>
+                            Add Row
+                        </button>
+                        <button @click="$dispatch('refresh-data')" class="bg-white hover:bg-gray-100 text-black px-3 py-1 rounded border border-gray-300 text-sm flex items-center">
+                            <i class="icon-refresh-cw w-4 h-4 mr-1"></i>
+                            Refresh
+                        </button>
+                    </div>
+                </div>
+
+                <div class="flex-1 overflow-auto p-4">
+                    <div x-show="activeView === 'data'">
+                        <?php include 'components/data_table.php'; ?>
+                    </div>
+                    <div x-show="activeView === 'structure'">
+                        <?php include 'components/structure_table.php'; ?>
+                    </div>
+                </div>
+
+                <div class="bg-gray-100 border-t border-gray-200 p-4 flex justify-between items-center">
+                    <div>
                         <?php include 'components/pagination.php'; ?>
-                    <?php endif; ?>
+                    </div>
+                    <div class="flex space-x-2">
+                        <button @click="activeView = 'data'" :class="{ 'bg-white text-black border-gray-300 border': activeView === 'data', 'bg-gray-200 text-gray-600': activeView !== 'data' }" class="px-3 py-1 rounded text-sm">Data</button>
+                        <button @click="activeView = 'structure'" :class="{ 'bg-white text-black border-gray-300 border': activeView === 'structure', 'bg-gray-200 text-gray-600': activeView !== 'structure' }" class="px-3 py-1 rounded text-sm">Structure</button>
+                    </div>
                 </div>
 
-                <div class="mb-4">
-                    <button @click="activeTab = 'data'" :class="{ 'bg-blue-500 text-white': activeTab === 'data', 'bg-gray-200 text-gray-700': activeTab !== 'data' }" class="px-4 py-2 rounded-l-md">Data</button>
-                    <button @click="activeTab = 'structure'" :class="{ 'bg-blue-500 text-white': activeTab === 'structure', 'bg-gray-200 text-gray-700': activeTab !== 'structure' }" class="px-4 py-2">Structure</button>
-                    <button @click="activeTab = 'insert'" :class="{ 'bg-blue-500 text-white': activeTab === 'insert', 'bg-gray-200 text-gray-700': activeTab !== 'insert' }" class="px-4 py-2 rounded-r-md">Insert</button>
-                </div>
-
-                <div x-show="activeTab === 'data'" class="flex-1 overflow-auto">
-                    <?php include 'components/data_table.php'; ?>
-                </div>
-
-                <div x-show="activeTab === 'structure'" class="flex-1 overflow-auto">
-                    <?php include 'components/structure_table.php'; ?>
-                </div>
-
-                <div x-show="activeTab === 'insert'" class="flex-1 overflow-auto">
-                    <?php include 'components/insert_form.php'; ?>
+                <!-- Insert Form Drawer -->
+                <div x-show="showInsertDrawer"
+                    class="fixed inset-y-0 right-0 w-96 bg-white shadow-xl overflow-y-auto"
+                    @click.away="showInsertDrawer = false"
+                    x-transition:enter="transition ease-out duration-300"
+                    x-transition:enter-start="translate-x-full"
+                    x-transition:enter-end="translate-x-0"
+                    x-transition:leave="transition ease-in duration-300"
+                    x-transition:leave-start="translate-x-0"
+                    x-transition:leave-end="translate-x-full">
+                    <div class="p-6">
+                        <h2 class="text-2xl font-bold mb-4">Insert New Record</h2>
+                        <?php include 'components/insert_form.php'; ?>
+                    </div>
                 </div>
             <?php else: ?>
-                <p class="text-gray-500">Select a table from the sidebar to view its contents.</p>
+                <p class="p-4 text-gray-500">Select a table from the sidebar to view its contents.</p>
             <?php endif; ?>
         </main>
     </div>
+
+    <script>
+        document.addEventListener('alpine:init', () => {
+            Alpine.data('mainApp', () => ({
+                activeView: 'data',
+                showInsertDrawer: false,
+                init() {
+                    this.$watch('showInsertDrawer', (value) => {
+                        if (!value) {
+                            // Reset the form when the drawer is closed
+                            this.$refs.insertForm.reset();
+                        }
+                    });
+                }
+            }));
+        });
+
+        // Add an event listener for refreshing data
+        window.addEventListener('refresh-data', () => {
+            // Make an AJAX request to fetch the updated data
+            fetch(window.location.href)
+                .then(response => response.text())
+                .then(html => {
+                    // Parse the HTML and update the table content
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(html, 'text/html');
+                    const newTable = doc.querySelector('.data-table');
+                    const currentTable = document.querySelector('.data-table');
+                    if (newTable && currentTable) {
+                        currentTable.innerHTML = newTable.innerHTML;
+                    }
+                })
+                .catch(error => {
+                    console.error('Error refreshing data:', error);
+                    // Fallback to page reload if AJAX refresh fails
+                    location.reload();
+                });
+        });
+    </script>
 </body>
 
 </html>
