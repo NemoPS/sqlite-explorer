@@ -138,27 +138,39 @@ if (isset($_GET['table'])) {
 if (isset($_GET['action']) && $_GET['action'] === 'insert' && isset($_GET['table'])) {
     $selectedTable = $_GET['table'];
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-        $columns = [];
-        $values = [];
-        foreach ($structure as $column) {
-            $columnName = $column['name'];
-            if (isset($_POST[$columnName]) && $column['pk'] != 1) {
-                $columns[] = $columnName;
-                $values[] = $_POST[$columnName];
-            }
-        }
+        // Check if it's an AJAX request
+        if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest') {
+            header('Content-Type: application/json');
 
-        if (!empty($columns)) {
-            $placeholders = array_fill(0, count($columns), '?');
-            $sql = "INSERT INTO \"$selectedTable\" (" . implode(', ', $columns) . ") VALUES (" . implode(', ', $placeholders) . ")";
+            // Get JSON data from the request body
+            $jsonData = file_get_contents('php://input');
+            $formData = json_decode($jsonData, true);
 
-            try {
-                $stmt = $db->prepare($sql);
-                $stmt->execute($values);
-                $message = "Data inserted successfully.";
-            } catch (PDOException $e) {
-                $error = "Error inserting data: " . $e->getMessage();
+            $columns = [];
+            $values = [];
+            foreach ($structure as $column) {
+                $columnName = $column['name'];
+                if (isset($formData[$columnName]) && $column['pk'] != 1) {
+                    $columns[] = $columnName;
+                    $values[] = $formData[$columnName];
+                }
             }
+
+            if (!empty($columns)) {
+                $placeholders = array_fill(0, count($columns), '?');
+                $sql = "INSERT INTO \"$selectedTable\" (" . implode(', ', $columns) . ") VALUES (" . implode(', ', $placeholders) . ")";
+
+                try {
+                    $stmt = $db->prepare($sql);
+                    $stmt->execute($values);
+                    echo json_encode(['message' => 'Data inserted successfully.', 'error' => false]);
+                } catch (PDOException $e) {
+                    echo json_encode(['message' => 'Error inserting data: ' . $e->getMessage(), 'error' => true]);
+                }
+            } else {
+                echo json_encode(['message' => 'No valid data provided.', 'error' => true]);
+            }
+            exit;
         }
     }
 }

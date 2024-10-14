@@ -14,7 +14,7 @@
     </style>
 </head>
 
-<body class="h-full flex flex-col" x-data="{ headerExpanded: false, activeTab: 'data' }">
+<body class="h-full flex flex-col" x-data="{ headerExpanded: false, activeTab: '<?= $_GET['activeTab'] ?? 'data' ?>' }">
     <?php include 'components/header.php'; ?>
 
     <?php if ($error): ?>
@@ -31,13 +31,14 @@
                 <h2 class="text-2xl font-semibold mb-4">Table: <?= htmlspecialchars($selectedTable) ?></h2>
 
                 <div class="mb-4">
-                    <button @click="activeTab = 'data'" :class="{ 'bg-indigo-500 text-white': activeTab === 'data', 'bg-gray-200': activeTab !== 'data' }" class="px-4 py-2 rounded-l-md">Data</button>
-                    <button @click="activeTab = 'structure'" :class="{ 'bg-indigo-500 text-white': activeTab === 'structure', 'bg-gray-200': activeTab !== 'structure' }" class="px-4 py-2">Structure</button>
-                    <button @click="activeTab = 'insert'" :class="{ 'bg-indigo-500 text-white': activeTab === 'insert', 'bg-gray-200': activeTab !== 'insert' }" class="px-4 py-2 rounded-r-md">Insert</button>
+                    <button @click="activeTab = 'data'" :class="{ 'bg-blue-500 text-white': activeTab === 'data', 'bg-gray-200 text-gray-700': activeTab !== 'data' }" class="px-4 py-2 rounded-l-md">Data</button>
+                    <button @click="activeTab = 'structure'" :class="{ 'bg-blue-500 text-white': activeTab === 'structure', 'bg-gray-200 text-gray-700': activeTab !== 'structure' }" class="px-4 py-2">Structure</button>
+                    <button @click="activeTab = 'insert'" :class="{ 'bg-blue-500 text-white': activeTab === 'insert', 'bg-gray-200 text-gray-700': activeTab !== 'insert' }" class="px-4 py-2 rounded-r-md">Insert</button>
                 </div>
 
                 <div x-show="activeTab === 'data'">
                     <?php include 'components/data_table.php'; ?>
+                    <?php include 'components/pagination.php'; ?>
                 </div>
 
                 <div x-show="activeTab === 'structure'">
@@ -48,51 +49,10 @@
                     <?php include 'components/insert_form.php'; ?>
                 </div>
             <?php else: ?>
-                <p class="text-lg">Select a table from the list on the left to view its structure and data.</p>
+                <p class="text-gray-500">Select a table from the sidebar to view its contents.</p>
             <?php endif; ?>
         </main>
     </div>
-
-    <script>
-        document.getElementById('file_selector').addEventListener('change', function(e) {
-            var file = e.target.files[0];
-            if (file) {
-                document.getElementById('file_name').value = file.name;
-            }
-        });
-
-        document.addEventListener('DOMContentLoaded', function() {
-            var tableWrapper = document.getElementById('tableWrapper');
-            var tableContainer = document.getElementById('tableContainer');
-            var scrollContainer = document.getElementById('scrollContainer');
-            var scrollContent = document.getElementById('scrollContent');
-            var table = tableContainer ? tableContainer.querySelector('table') : null;
-
-            function updateScrollContentWidth() {
-                if (table && scrollContent && tableContainer) {
-                    var tableWidth = table.offsetWidth;
-                    var containerWidth = tableContainer.offsetWidth;
-                    scrollContent.style.width = Math.max(tableWidth, containerWidth) + 'px';
-                }
-            }
-
-            function syncScroll() {
-                if (this === tableContainer) {
-                    scrollContainer.scrollLeft = tableContainer.scrollLeft;
-                } else {
-                    tableContainer.scrollLeft = scrollContainer.scrollLeft;
-                }
-            }
-
-            if (tableContainer && scrollContainer) {
-                updateScrollContentWidth();
-                window.addEventListener('resize', updateScrollContentWidth);
-
-                tableContainer.addEventListener('scroll', syncScroll);
-                scrollContainer.addEventListener('scroll', syncScroll);
-            }
-        });
-    </script>
 </body>
 
 </html>
